@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.route.js';
 import messageRoutes from './routes/message.route.js';
+import { connectDB } from './lib/db.js';
 
 
 dotenv.config();
@@ -14,5 +15,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
 
-app.listen(PORT, ()=>console.log(`server is running on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`server is running on port ${PORT}`);
+    connectDB();
+});
 
