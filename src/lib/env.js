@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-export const ENV = {
+const ENV = {
     PORT: process.env.PORT || 3000,
     MONGO_URI: process.env.MONGO_URI,
     JWT_SECRET: process.env.JWT_SECRET,
@@ -9,3 +9,5 @@ export const ENV = {
     EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME,
     CLIENT_URL: process.env.CLIENT_URL,
 };
+
+export default ENV;
