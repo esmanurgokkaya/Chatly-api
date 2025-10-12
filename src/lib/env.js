@@ -12,6 +12,8 @@ const ENV = {
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
     NODE_ENV: process.env.NODE_ENV || "development",
+    ARCJET_API_KEY: process.env.ARCJET_API_KEY,
+    ARCJET_ENV: process.env.ARCJET_ENV || "development",
 };
 
 export default ENV;
