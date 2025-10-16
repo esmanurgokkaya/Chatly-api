@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Message from "../models/message.model.js";
 import User from "../models/user.model.js";
 import cloudinary from "../lib/cloudinary.js";
@@ -19,15 +20,18 @@ export const getMessagesByUserId = async (req, res) => {
   try {
     const myId = req.user._id;
     const { id: partnerId } = req.params;
-    console.log("My ID:", myId);
-    console.log("Partner ID:", partnerId);
+
+    // Validate if partnerId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(partnerId)) {
+      return res.status(400).json({ error: "Invalid user ID format" });
+    }
+    
     const messages = await Message.find({
       $or: [
         { senderId: myId, receiverId: partnerId },
         { senderId: partnerId, receiverId: myId },
       ],
     });
-    console.log(messages);
     res.status(200).json(messages);
   } catch (error) {
     console.error("Error fetching messages:", error);
