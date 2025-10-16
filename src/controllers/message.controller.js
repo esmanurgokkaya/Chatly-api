@@ -45,6 +45,24 @@ export const sendMessage = async (req, res) => {
         .status(400)
         .json({ message: "Message text or image is required" });
     }
+
+    // Check text length
+    if (text && text.length > 1000) {
+      return res
+        .status(400)
+        .json({ message: "Message text should be less than 1000 characters" });
+    }
+
+    // Check image size (assuming base64)
+    if (image) {
+      const sizeInMB = (image.length * 3) / 4 / 1024 / 1024; // Approximate size in MB
+      if (sizeInMB > 5) {
+        return res
+          .status(400)
+          .json({ message: "Image size should be less than 5MB" });
+      }
+    }
+
     if (senderId.equals(receiverId)) {
       return res
         .status(400)
@@ -57,10 +75,36 @@ export const sendMessage = async (req, res) => {
 
     let imageUrl;
 
-    
+    // Normalize image input: Cloudinary accepts data URIs (e.g. "data:image/png;base64,...")
+    // If client sent raw base64 (starts with iVBORw0K... for PNG), prefix a reasonable data URI so
+    // the Cloudinary SDK doesn't try to treat the long string as a local filename (which causes ENAMETOOLONG).
     if (image) {
-      const uploadResponse = await cloudinary.uploader.upload(image);
-      imageUrl = uploadResponse.secure_url;
+      try {
+        let uploadSource = image;
+
+        // Remove whitespace/newlines for detection
+        const compact = String(uploadSource).replace(/\s+/g, "");
+
+        // If it already looks like a data URI, use as-is
+        if (!/^data:/i.test(compact)) {
+          // Heuristic: long base64 string (typical PNG/JPEG base64) - prefix with data URI
+          // PNG base64 typically starts with iVBOR, JPEG with /9j/ - cover both
+          const looksLikeBase64 = /^(?:iVBOR|\/9j\/)/.test(compact) || /^[A-Za-z0-9+/=]+$/.test(compact);
+          if (looksLikeBase64) {
+            // Default to PNG; if you know the mime type from client, prefer that.
+            uploadSource = `data:image/png;base64,${compact}`;
+          }
+        }
+
+        const uploadResponse = await cloudinary.uploader.upload(uploadSource, {
+          folder: "chatly_messages",
+        });
+        imageUrl = uploadResponse.secure_url;
+      } catch (uploadErr) {
+        console.error("Cloudinary upload error:", uploadErr);
+        // Return a helpful error rather than a generic ENAMETOOLONG stack
+        return res.status(400).json({ message: "Invalid image data or upload failed", details: uploadErr.message });
+      }
     }
 
     const newMessage = new Message({
